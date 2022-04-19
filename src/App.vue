@@ -154,11 +154,11 @@
             <div class="chat-room">
               <div
                 :class="user_id == 1 ? 'message-youself' : 'message'"
-                v-for="item in channelMessage"
+                v-for="item in ch1"
                 :key="item.key"
               >
                 <div :class="user_id == 1 ? 'message-inner' : 'message-curren'">
-                  {{ item.content.message }}
+                  {{ item.message }}
                 </div>
               </div>
             </div>
@@ -221,6 +221,7 @@ import pN2 from "../src/pubnub/testPs";
 export default {
   data() {
     return {
+      ch1: this.$pnGetMessage("ch1", this.receptor),
       channelName: null,
       getMessage: null,
       hp: null,
@@ -246,10 +247,20 @@ export default {
     //   channels: ["channel_1"],
     // });
 
-    this.currentChat();
+    // this.currentChat();
+
+    this.$pnSubscribe({
+      channels: ["ch1", "ch2"],
+    });
+    // console.log("1", this.ch1);
   },
 
   methods: {
+    receptor(msg) {
+      console.log("ReceiveMessge", msg);
+      msg.message = `${msg.message}`;
+    },
+
     test() {
       alert("hii");
     },
@@ -299,15 +310,21 @@ export default {
       // });
 
       // Test publish
-      let rs = this.$pnPublish({
-        channel: "channel_1",
-        message: {
-          text: this.hp,
-          time: Date.now(),
-          channel: "channel_1",
+      this.$pnPublish(
+        {
+          channel: "ch1",
+          message: this.hp,
+          storeInHistory: true,
+          // {
+          //   text: this.hp,
+          //   time: Date.now(),
+          //   channel: "ch1",
+          // },
         },
-      });
-      console.log(rs, "ok");
+        (status, response) => console.log("Status:", status, response)
+      );
+
+      console.log("this data ch1:", this.ch1);
 
       //  let rsSub = this.$pnSubscribe({
       //   channels: ["channel_1"],
@@ -315,12 +332,58 @@ export default {
 
       // console.log(rsSub, "work");
 
-      this.currentChat();
+      // this.currentChat();
       // this.connectChannel();
-
-      // this.fetMessage();
+       this.fetMessage()
+      // this.fetOldMessage();
+      // this.fetWithRelease();
 
       this.hp = "";
+    },
+    fetMessage() {
+      console.log(999);
+      const pn = Pubnub.getInstance();
+      pn.history(
+        {
+          channel: "ch1",
+          count: 100, // how many items to fetch
+          // stringifiedTimeToken: true, // false is the default
+        },
+        function (status, response) {
+          console.log("This history:", status, response);
+        }
+      );
+
+      // pn.history(
+      //   {
+      //     channels: "ch1",
+      //     // end: "15343325004275466",
+      //     limit: 100,
+      //   },
+      //   (status, response) => {
+      //     // handle response
+      //     console.log(status, response);
+      //   }
+      // );
+    },
+    fetOldMessage() {
+      console.log(888);
+      const pn = Pubnub.getInstance();
+      pn.fetchMessages(
+        {
+          channels: ["ch1"],
+          count: 100, // how many items to fetch
+          // stringifiedTimeToken: true, // false is the default
+        },
+        function (status, response) {
+          console.log("This fetch old message:", status, response);
+        }
+      );
+    },
+    fetWithRelease() {
+      const pn = Pubnub.getInstance();
+      let rs = pn.$pnRelease("ch1");
+      console.log(rs);
     },
 
     connectChannel() {
@@ -427,19 +490,20 @@ export default {
         },
       });
     },
-    fetMessage() {
-     let rs= this.$pnSubscribe({
-        channels: ["channel_1"],
-      })
+    // fetMessage() {
+    //   let rs = this.$pnSubscribe({
+    //     channels: ["channel_1"],
+    //   });
 
-      console.log("RS", rs);
-    }
+    //   console.log("RS", rs);
+    // },
   },
-  // created() {
-  //   this.$pnSubscribe({
-  //     channels: ["channel_1"],
-  //   });
-  // },
+  created() {
+    this.fetMessage();
+    // this.$pnSubscribe({
+    //   channels: ["channel_1"],
+    // });
+  },
   // watch: {
   //   currentChat: function () {
   //     this.$pnSubscribe({
