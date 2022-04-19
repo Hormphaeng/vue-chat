@@ -158,7 +158,7 @@
                 :key="item.key"
               >
                 <div :class="user_id == 1 ? 'message-inner' : 'message-curren'">
-                  {{ item.content.message }}
+                  {{ item.content }}
                 </div>
               </div>
             </div>
@@ -272,6 +272,8 @@ export default {
 
       // alert(this.hp);
 
+      this.connectChannel();
+
       this.hp = "";
     },
 
@@ -283,13 +285,13 @@ export default {
         channels: [channel],
         timetoken: pubNub.lastToken(),
       });
-      // pubNub.listeningAndSubScribe(this.onPaid, () => {
-      //   console.log(1);
-      //   this.$pnSubscribe({
-      //     channels: [channel],
-      //     timetoken: pubNub.lastToken(),
-      //   });
-      // });
+      pubNub.listeningAndSubScribe(this.onPaid, () => {
+        console.log(1);
+        this.$pnSubscribe({
+          channels: [channel],
+          timetoken: pubNub.lastToken(),
+        });
+      });
     },
     onPaid(res) {
       if (res) {
