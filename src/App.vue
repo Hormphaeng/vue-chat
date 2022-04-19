@@ -209,11 +209,19 @@ import $ from "jquery";
 import pubNub from "../src/pubnub";
 import domain from "./constant/domain";
 import axios from "axios";
+import Pubnub from "pubnub-vue";
+import pN2 from "../src/pubnub/testPs";
+// import Pubnub from 'pubnub-vue'
+// import Pubnub from 'pubnub-vue/src/pubnub-vue';
+// import pubnub from '../src/pubnub';
+// import PubNubVue from 'pubnub-vue/src/pubnub-vue';
+// import PubNubVue from '@pubnub-vue/src/pubnub-vue'
 // import pubnub from "@/pubnub";
 
 export default {
   data() {
     return {
+      channelName: null,
       getMessage: null,
       hp: null,
       uuid: null,
@@ -231,7 +239,14 @@ export default {
     $("#action_menu_btn").click(function () {
       $(".action_menu").toggle();
     });
-    this.connectChannel();
+    //this.connectChannel();
+    console.log("Load");
+    // this.currentChat();
+    // this.$pnSubscribe({
+    //   channels: ["channel_1"],
+    // });
+
+    this.currentChat();
   },
 
   methods: {
@@ -255,34 +270,63 @@ export default {
       }
     },
     async sendMesssage() {
-      // console.log("Image=>",this.fileName.name);
-      let domainUrl = `${domain.url}/api/chat`;
-      // console.log(domainUrl, "<=My Domain");
-      let payload = {
-        message: this.hp,
-      };
+      console.log("Here sendMesssage");
+      // // console.log("Image=>",this.fileName.name);
+      // let domainUrl = `${domain.url}/api/chat`;
+      // // console.log(domainUrl, "<=My Domain");
+      // let payload = {
+      //   message: this.hp,
+      // };
 
-      let dataRes = await axios.post(domainUrl, payload);
-      this.uuid = dataRes.data.data.channel1;
+      // let dataRes = await axios.post(domainUrl, payload);
+      // this.channelName = dataRes.data.data.channel1;
 
       // console.log(dataRes.data.data.channel1);
-      // console.log(this.uuid);
+      // console.log("This channel is:", this.channelName);
 
-      // call function
+      // // call function
 
-      // alert(this.hp);
+      // // alert(this.hp);
+
+      // this.$pnPublish({
+      //   channel: this.currentChat,
+      //   message: {
+      //     username: this.username,
+      //     text: this.message,
+      //     time: Date.now(),
+      //     channel: this.currentChat,
+      //   },
+      // });
+
+      // Test publish
+      let rs = this.$pnPublish({
+        channel: "channel_1",
+        message: {
+          text: this.hp,
+          time: Date.now(),
+          channel: "channel_1",
+        },
+      });
+      console.log(rs, "ok");
+
+      //  let rsSub = this.$pnSubscribe({
+      //   channels: ["channel_1"],
+      // });
+
+      // console.log(rsSub, "work");
+
+      this.currentChat();
+      // this.connectChannel();
+
+      // this.fetMessage();
 
       this.hp = "";
     },
 
     connectChannel() {
-      console.log("this UUID is " + this.uuid);
-      const channel = pubNub.channelForUUID(this.uuid);
-      console.log("this", channel);
-      this.$pnSubscribe({
-        channels: [channel],
-        timetoken: pubNub.lastToken(),
-      });
+      // console.log("this UUID is " + this.uuid);
+      // const channel = pubNub.channelForUUID(this.uuid);
+      // console.log("this", channel);
       // pubNub.listeningAndSubScribe(this.onPaid, () => {
       //   console.log(1);
       //   this.$pnSubscribe({
@@ -299,7 +343,7 @@ export default {
       }
 
       console.log("this on paid", res);
-      this.channelMessage.push(res);
+      // this.channelMessage.push(res);
       // this.getMessage = res.content.message;
       // console.log("get MSG", this.getMessage);
       // this.channelMessage.push(this.getMessage);
@@ -307,23 +351,111 @@ export default {
       // // remove duplicates
       // this.newMessageChannel = [...new Set(this.channelMessage)];
 
-      console.log("This old channel Message:", this.channelMessage);
+      // console.log("This old channel Message:", this.channelMessage);
       // console.log("This new message channel:", this.newMessageChannel);
     },
-
-    async sendFileChannel() {
-      // pubNub.listeningAndSubScribe(this.onPaid, () => {
-      //   const result = await pubnub.sendFile({
-      //     channel: "my_channel",
-      //     file: file,
-      //   });
-      // });
-      // const result = await pubNub.sendFile({
-      //   channel: "channel_1",
-      //   file: this.fileName,
-      // });
+    currentChat: function () {
+      console.log("111");
+      let instance = Pubnub.getInstance();
+      instance.removeAllListeners();
+      instance.addListener({
+        message: function (m) {
+          console.log("M", m.message);
+          // handle message
+          var channelName = m.channel; // The channel to which the message was published
+          var channelGroup = m.subscription; // The channel group or wildcard subscription match (if exists)
+          var pubTT = m.timetoken; // Publish timetoken
+          var msg = m.message; // The Payload
+          var publisher = m.publisher; //The Publisher
+        },
+        presence: function (p) {
+          // handle presence
+          var action = p.action; // Can be join, leave, state-change, or timeout
+          var channelName = p.channel; // The channel to which the message was published
+          var occupancy = p.occupancy; // Number of users subscribed to the channel
+          var state = p.state; // User State
+          var channelGroup = p.subscription; //  The channel group or wildcard subscription match (if exists)
+          var publishTime = p.timestamp; // Publish timetoken
+          var timetoken = p.timetoken; // Current timetoken
+          var uuid = p.uuid; // UUIDs of users who are subscribed to the channel
+        },
+        signal: function (s) {
+          // handle signal
+          var channelName = s.channel; // The channel to which the signal was published
+          var channelGroup = s.subscription; // The channel group or wildcard subscription match (if exists)
+          var pubTT = s.timetoken; // Publish timetoken
+          var msg = s.message; // The Payload
+          var publisher = s.publisher; //The Publisher
+        },
+        objects: (objectEvent) => {
+          var channel = objectEvent.channel; // The channel
+          var channelGroup = objectEvent.subscription; // The channel group
+          var timetoken = objectEvent.timetoken; // The event timetoken
+          var publisher = objectEvent.publisher; // The UUID that triggered this event
+          var event = objectEvent.event; // The event name that occurred
+          var type = objectEvent.type; // The event type that occurred
+          var data = objectEvent.data; // The event data that occurred
+        },
+        messageAction: function (ma) {
+          // handle message action
+          var channelName = ma.channel; // The channel to which the message was published
+          var publisher = ma.publisher; //The Publisher
+          var event = ma.message.event; // message action added or removed
+          var type = ma.message.data.type; // message action type
+          var value = ma.message.data.value; // message action value
+          var messageTimetoken = ma.message.data.messageTimetoken; // The timetoken of the original message
+          var actionTimetoken = ma.message.data.actionTimetoken; // The timetoken of the message action
+        },
+        file: function (event) {
+          const channelName = event.channel; // Channel to which the file belongs
+          const channelGroup = event.subscription; // Channel group or wildcard subscription match (if exists)
+          const publisher = event.publisher; // File publisher
+          const timetoken = event.timetoken; // Event timetoken
+          const message = event.message; // Optional message attached to the file
+          const fileId = event.file.id; // File unique id
+          const fileName = event.file.name; // File name
+          const fileUrl = event.file.url; // File direct URL
+        },
+        status: function (s) {
+          var affectedChannelGroups = s.affectedChannelGroups; // The channel groups affected in the operation, of type array.
+          var affectedChannels = s.affectedChannels; // The channels affected in the operation, of type array.
+          var category = s.category; //Returns PNConnectedCategory
+          var operation = s.operation; //Returns PNSubscribeOperation
+          var lastTimetoken = s.lastTimetoken; //The last timetoken used in the subscribe request, of type long.
+          var currentTimetoken = s.currentTimetoken; //The current timetoken fetched in the subscribe response, which is going to be used in the next request, of type long.
+          var subscribedChannels = s.subscribedChannels; //All the current subscribed channels, of type array.
+        },
+      });
     },
+    fetMessage() {
+     let rs= this.$pnSubscribe({
+        channels: ["channel_1"],
+      })
+
+      console.log("RS", rs);
+    }
   },
+  // created() {
+  //   this.$pnSubscribe({
+  //     channels: ["channel_1"],
+  //   });
+  // },
+  // watch: {
+  //   currentChat: function () {
+  //     this.$pnSubscribe({
+  //       channels: [this.channelName],
+  //     });
+  //     let msgLast = [];
+  //     Pubnub.getInstance().history({
+  //       channel: this.channelName,
+  //       count: 15,
+  //       stringifiedTimeToken: true, // false is the default
+  //     })
+  //     .then(response => {
+  //       console.log("This Response: " + response);
+  //     })
+  //   },
+  // },
 };
 </script>
 
