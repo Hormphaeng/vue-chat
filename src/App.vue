@@ -252,7 +252,7 @@ export default {
     this.$pnSubscribe({
       channels: ["ch1", "ch2"],
     });
-    // console.log("1", this.ch1);
+    this.fetMessage();
   },
 
   methods: {
@@ -334,19 +334,18 @@ export default {
 
       // this.currentChat();
       // this.connectChannel();
-       this.fetMessage()
-      // this.fetOldMessage();
+      this.fetMessage();
+      this.fetOldMessage();
       // this.fetWithRelease();
 
       this.hp = "";
     },
     fetMessage() {
-      console.log(999);
       const pn = Pubnub.getInstance();
       pn.history(
         {
           channel: "ch1",
-          count: 100, // how many items to fetch
+          // / how many items to fetch
           // stringifiedTimeToken: true, // false is the default
         },
         function (status, response) {
@@ -372,6 +371,8 @@ export default {
       pn.fetchMessages(
         {
           channels: ["ch1"],
+          start: "16503616311494246",
+          end: "16503616826825653",
           count: 100, // how many items to fetch
           // stringifiedTimeToken: true, // false is the default
         },
@@ -384,6 +385,9 @@ export default {
       const pn = Pubnub.getInstance();
       let rs = pn.$pnRelease("ch1");
       console.log(rs);
+    },
+    lastToken() {
+      return new Date().getTime() - 30 * 60 * 1000 + "0000";
     },
 
     connectChannel() {
@@ -499,7 +503,6 @@ export default {
     // },
   },
   created() {
-    this.fetMessage();
     // this.$pnSubscribe({
     //   channels: ["channel_1"],
     // });
